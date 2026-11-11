@@ -1,0 +1,15 @@
+diff --git a/scripts/_common.sh b/scripts/_common.sh
+index 2872a89..fa3c0b8 100755
+--- a/scripts/_common.sh
++++ b/scripts/_common.sh
+@@ -2,7 +2,9 @@
+ # Shared settings for the run scripts. Sourced, never executed directly.
+ 
+ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+-APP_DIR="$REPO_ROOT/fl_app"
++# APP_DIR=fl_app_autovi selects the AutoVI anomaly-detection app (see autovi/README.md)
++APP_DIR="${APP_DIR:-$REPO_ROOT/fl_app}"
++case "$APP_DIR" in /*) ;; *) APP_DIR="$REPO_ROOT/$APP_DIR" ;; esac
+ VENV_DIR="${VENV_DIR:-$REPO_ROOT/.venv}"
+ DEFAULT_PARTITIONS="$REPO_ROOT/data/partitions/dirichlet"
+ 

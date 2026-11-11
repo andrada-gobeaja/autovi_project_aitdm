@@ -1,0 +1,80 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "autovi-fl"
+version = "1.0.0"
+description = "AITDM – federated unsupervised anomaly detection on AutoVI (Flower + PyTorch)"
+requires-python = ">=3.11"
+# The exact versions are pinned in ../requirements.txt
+dependencies = [
+    "flwr[simulation]>=1.41.0",
+    "torch>=2.4",
+    "torchvision>=0.19",
+    "numpy",
+    "scikit-learn",
+    "pillow",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["autovi_fl"]
+
+# ---------------------------------------------------------------------------
+# Flower configuration (same keys as ../fl_app where they mean the same thing)
+# ---------------------------------------------------------------------------
+[tool.flwr.app]
+publisher = "aitdm"
+
+[tool.flwr.app.components]
+serverapp = "autovi_fl.server_app:app"
+clientapp = "autovi_fl.client_app:app"
+
+# Every key below can be overridden at run time, e.g.
+#   flwr run . --run-config "num-server-rounds=10 strategy='fedprox'"
+[tool.flwr.app.config]
+# Folder created by autovi/prepare_data.py (client_<i>.npz + test.npz + meta.json).
+# Use an ABSOLUTE path; scripts/run_simulation.sh fills it in.
+partitions-dir = ""
+# Folder where the server writes final_model.pt and metrics.json ("" = don't save)
+save-dir = ""
+
+seed = 1
+num-server-rounds = 50
+local-epochs = 2
+# Student optimiser: SGD with momentum, the settings of the STFPM paper
+learning-rate = 0.4
+momentum = 0.9
+weight-decay = 0.0001
+batch-size = 32
+# Mixed precision on the GPU (about 2x faster, same results up to rounding)
+amp = true
+
+# Aggregation strategy (see docs/04_aggregation_strategies.md):
+#   fedavg | fedprox | fedavgm | fedadam | fedyogi | fedmedian | fedtrimmedavg | krum | qfedavg
+strategy = "fedavg"
+proximal-mu = 0.1
+server-momentum = 0.9
+server-lr = 0.01
+trim-beta = 0.2
+num-malicious = 1
+qfedavg-q = 0.1
+qfedavg-client-lr = 1.0
+
+# Central differential privacy (wraps any strategy). 0 = off.
+dp-noise-multiplier = 0.0
+dp-clipping-norm = 1.0
+dp-delta = 1e-5
+
+# Robustness experiments: attacking clients (comma-separated partition ids)
+malicious-clients = ""
+attack = "sign-flip"
+attack-inflate-examples = 1
+
+# The test sets are evaluated once, after the last round. true = every round
+# (learning curves for the report, NOT for choosing settings).
+test-every-round = false
+
+fraction-train = 1.0
+fraction-evaluate = 1.0
+min-nodes = 3
